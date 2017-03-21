@@ -17,7 +17,6 @@ class EasyBlogSimpleSchema_plg
 
 		$blog = EB::table( 'Blog' );
 		$blog->load( $row->id );
-
 		$profile = EB::table( 'Profile', 'Table' );
 		$profile->load( $row->created_by );
 
@@ -33,7 +32,7 @@ class EasyBlogSimpleSchema_plg
 		}
 		$blog->created = $created->toMySQL();
 		$blog->text	= $row->intro . $row->content;
-		   
+	
 		$config->set('max_video_width', 320);
 		$config->set('max_video_width', 180);
 		$blog->text = EasyBlogHelper::helper( 'Videos' )->processVideos( $blog->text );
@@ -56,7 +55,6 @@ class EasyBlogSimpleSchema_plg
 			$pos = JString::strpos(strip_tags($item->textplain), ' ', false);
 			$item->textplain = JString::substr(strip_tags($blog->text), 0, $pos);
 		}	
-		//$image_data = json_decode($blog->image);
 
 		$item->postid = $blog->id;
 		$item->title = $blog->title;		
@@ -66,23 +64,24 @@ class EasyBlogSimpleSchema_plg
 		$item->image = new stdClass();
 		if($row->image)
 		{
-			//$item->image->url = $blog->getImage();
 			$item->image->url = $row->getImage('large');
 			$item->image->url = 'http:'.$item->image->url;
-			//$item->image->url = ltrim($item->image->url,'//');
+			
+			if($item->image->url == "http:http://demo.appcarvers.com/junite/components/com_easyblog/themes/wireframe/images/placeholder-image.png") 
+			{
+				$item->image->url = null;
+			}			
 		}
 		else
 		{
 			$item->image->url = null;
 		}
-		//$item->image->url = ($image_data->url)?$image_data->url:'';
-		//$item->image->url = null;
-		
+
 		$item->created_date = $blog->created;
 		$ebdate = new EasyBlogDate();
 		$item->created_date_elapsed	= $ebdate->getLapsedTime( $blog->created );
-		
-		$item->author->name = $profile->nickname;
+
+		$item->author->name = $profile->user->name;
 		$item->author->photo = JURI::root() . $profile->avatar;
 		
 		$item->category->categoryid = $category->id;
@@ -105,14 +104,12 @@ class EasyBlogSimpleSchema_plg
 			{
 				$item->introtext = str_replace('href="index','href="'.JURI::root().'index',$item->introtext);
 			    $item->text = str_replace('href="index','href="'.JURI::root().'index',$item->text);
-				//$item->text = str_replace('src="','src="'.JURI::root(),$item->text);	
 			}
 			
 			if (strpos($item->text,'href="images'))
 			{
 				$item->introtext = str_replace('href="images','href="'.JURI::root().'images',$item->introtext);
 			    $item->text = str_replace('href="images','href="'.JURI::root().'images',$item->text);
-				//$item->text = str_replace('src="','src="'.JURI::root(),$item->text);	
 			}
 
 			if ( strpos($item->text,'src="images') || strpos($item->introtext,'src="images') )
@@ -200,9 +197,10 @@ class EasyBlogSimpleSchema_4
 		$item->image->url = $image_data->url;
 		$item->created_date = $blog->created;
 		$item->created_date_elapsed	= EasyBlogDateHelper::getLapsedTime( $blog->created );
-		
+	
 		$item->author->name = $profile->nickname;
 		$item->author->photo = JURI::root() . $profile->avatar;
+		$item->author->email = $profile->email;
 		
 		$item->category->categoryid = $category->id;
 		$item->category->title = $category->title;

@@ -41,21 +41,16 @@ class EasyblogApiResourceBlog extends ApiResource
 		$res = new stdClass;
 
 		//to create revision and uid
-		$post = EB::post(NULL);
-		$post->create();
+		$post = EB::post(NULL);				
 		$key = 'post:'.$post->id;
 		
 		$file = JRequest::getVar( 'file' , '' , 'FILES' , 'array' );
 		$data['image']	= basename($data['image']);
 		$data['image'] = $key.'/'.$data['image'];
-		
-		/*if($file['name'])
-		{
-		  $image_obj = $this->uploadImage($key);
-		  $data['image'] = $image_obj->media->uri; 
-		}*/
+
 		//document needs to get from app
-		$data['content'] = $input->get('content', '', 'raw');
+		$data['content'] = urldecode ($input->get('content', '', 'raw'));
+
 		$data['document'] = null;
 		$data['published'] = $input->get('published', 1, 'INT');
 		$data['created_by'] = $log_user;
@@ -91,8 +86,7 @@ class EasyblogApiResourceBlog extends ApiResource
 			return;
 		}
 
-		$bpost = EB::post($post->id);
-		// $post->bind($row);
+		$bpost = EB::post($post->id);	
 		$item = EB::formatter('entry', $bpost);
 		$scm_obj = new EasyBlogSimpleSchema_plg();
 		$item = $scm_obj->mapPost($item, '<p><br><pre><a><blockquote><strong><h2><h3><em><ul><ol><li><iframe>');
@@ -123,27 +117,21 @@ class EasyblogApiResourceBlog extends ApiResource
 			$this->plugin->setResponse( $this->getErrorResponse(404, JText::_( 'PLG_API_EASYBLOG_BLOG_NOT_FOUND_MESSAGE' )) );
 			return;
 		}
+
 		//format data for get image using function
-		$post = EB::post($blog->id);
-		// $post->bind($row);
+		$post = EB::post($blog->id);		
 		$post = EB::formatter('entry', $post);
 		$scm_obj = new EasyBlogSimpleSchema_plg();
-		$item = $scm_obj->mapPost($post, '<p><br><pre><a><blockquote><strong><h2><h3><em><ul><ol><li><iframe>');
-		//$item = EasyBlogHelper::getHelper( 'SimpleSchema' )->mapPost($blog, '<p><br><pre><a><blockquote><strong><h2><h3><em><ul><ol><li><iframe>');
+		$item = $scm_obj->mapPost($post, '<p><br><pre><a><blockquote><strong><h2><h3><em><ul><ol><li><iframe>');		
 		$item->isowner = ( $blog->created_by == $this->plugin->get('user')->id )?true:false;
+		$item->author = $this->plugin->get('user')->name;
 		$item->allowcomment = $blog->allowcomment;
 
         $item->allowsubscribe = $blog->subscription;
 
 		// Tags
 		$modelPT	= EasyBlogHelper::getModel( 'PostTag' );
-		$item->tags = $modelPT->getBlogTags($blog->id);
-		
-		//created by vishal - for show extra images
-		//$item->text = preg_replace('/"images/i', '"'.JURI::root().'images', $item->text );
-		//$item->text = str_replace('href="','href="'.JURI::root(),$item->text);
-		//$item->text = str_replace('src="','src="'.JURI::root(),$item->text);
-				
+		$item->tags = $modelPT->getBlogTags($blog->id);				
 		$this->plugin->setResponse( $item );
 	}
 	//delet blog
@@ -210,10 +198,7 @@ class EasyblogApiResourceBlog extends ApiResource
 		// Right now it only inclues the media item.
 		$response = new stdClass();
 		$response->media = EBMM::getMedia($file->uri);
-		
-		//code for future use
-		//header('Content-type: text/x-json; UTF-8');
-		//$resp =  json_encode($response, JSON_HEX_TAG);
+
 		return $response;
 	}
 }

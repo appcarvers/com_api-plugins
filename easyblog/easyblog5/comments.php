@@ -12,12 +12,8 @@ jimport( 'simpleschema.easyblog.person' );
 jimport( 'simpleschema.easyblog.blog.post' );
 jimport( 'simpleschema.easyblog.blog.comment' );
 
-/*
-require_once( EBLOG_HELPERS . '/date.php' );
-require_once( EBLOG_HELPERS . '/string.php' );
-require_once( EBLOG_CLASSES . '/adsense.php' );
-*/
 require_once( EBLOG_ADMIN_INCLUDES . '/comment/comment.php' );
+require_once( EBLOG_ADMIN_INCLUDES . '/mediamanager/adapters/post.php' );
 
 class EasyblogApiResourceComments extends ApiResource
 {
@@ -32,6 +28,7 @@ class EasyblogApiResourceComments extends ApiResource
 		// If we have an id try to fetch the blog
 		$blog = EasyBlogHelper::table( 'Blog' );
 		$blog->load( $id );
+		$profile = EB::table( 'Profile', 'Table' );
 		
 		if (!$blog->id) {
 			$this->plugin->setResponse( $this->getErrorResponse(404, JText::_( 'PLG_API_EASYBLOG_BLOG_NOT_FOUND_MESSAGE' )) );
@@ -40,7 +37,7 @@ class EasyblogApiResourceComments extends ApiResource
 
 		$rows = $model->getBlogComment($id);
 
-		foreach ($rows as $row) {
+		foreach ($rows as $row) {			
 
 			$item = new CommentSimpleSchema;
 			$item->commentid = $row->id;
@@ -53,10 +50,10 @@ class EasyblogApiResourceComments extends ApiResource
 			$item->updated_date = $row->modified;
 
 			// Author
-			//$item->author->name = isset($row->poster->nickname) ? $row->poster->nickname : $row->name;
-			$item->author->name = $row->author->nickname;
+			$profile->load( $row->author->user->id );
+			$item->author->name = $row->author->user->name;		
 			$item->author->photo = isset($row->poster->avatar) ? $row->poster->avatar : 'default_blogger.png';
-			$item->author->photo = JURI::root() . 'components/com_easyblog/assets/images/' . $item->author->photo;
+			$item->author->photo = JURI::root() . 'images/easyblog_avatar/' . $profile->avatar;
 			$item->author->email = $row->email;
 			$item->author->website = isset($row->poster->url) ? $row->poster->url : $row->url;
 			
@@ -68,16 +65,26 @@ class EasyblogApiResourceComments extends ApiResource
 	}
 	
 	public function post() {
+		
+		$input = JFactory::getApplication()->input;
+		$id = $input->get('id', null, 'INT');		
+		$post = EB::post($id);		
+		$allowCommnet = $post->original->allowcomment;
+		
 		$app = JFactory::getApplication();
 		$my = $this->plugin->getUser();
-		$config = EasyBlogHelper::getConfig();
-		//$acl = EasyBlogACLHelper::getRuleSet();
+		$config = EasyBlogHelper::getConfig();		
 		$acl = EB::acl();
 		$post = $app->input->post->getArray();
 
 		if( empty($acl->rules->allow_comment) && (empty($my->id) && !$config->get('main_allowguestcomment')) )
 		{
 			$this->plugin->setResponse( $this->getErrorResponse(500, JText::_('COM_EASYBLOG_NO_PERMISSION_TO_POST_COMMENT')) );
+		}
+		
+		if( $allowCommnet == 0)
+		{
+			return $this->plugin->setResponse( $this->getErrorResponse(500, JText::_('COM_EASYBLOG_NO_PERMISSION_TO_POST_COMMENT')) );
 		}
 
 		$isModerated = false;
@@ -161,9 +168,7 @@ class EasyblogApiResourceComments extends ApiResource
 			$newUserId	= $state;
 		}
 
-		$totalComments 		= empty( $post[ 'totalComment' ] ) ? 1 : $post[ 'totalComment' ];
-
-		//$date 	= EasyBlogHelper::getDate();
+		$totalComments 		= empty( $post[ 'totalComment' ] ) ? 1 : $post[ 'totalComment' ];		
 		$date 	= EasyBlogDate::getDate();
 
 		$comment->set( 'created' 	, $date->toMySQL() );

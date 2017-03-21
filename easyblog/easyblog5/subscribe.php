@@ -70,7 +70,7 @@ class EasyblogApiResourceSubscribe extends ApiResource
 	//getting particular blog subscribers
 	public function getBlogsubscribers()
 	{
-		$app = JFactory::getApplication();		
+		 $app = JFactory::getApplication();		
 		$blogid = $app->input->get('blogid',0,'INT');		
 		$db		= EasyBlogHelper::db();
 		$where	= array();		
@@ -84,7 +84,9 @@ class EasyblogApiResourceSubscribe extends ApiResource
 		//try to save blog id in table		
 		$btable->load($blogid);
 		$result['data'] = $btable->getSubscribers(array());
-		return $result;				 
+		 return $result;
+		 
+		 
 	}		
 	//getting particular category subscribers
 	public function getCatsubscribes()
@@ -102,7 +104,7 @@ class EasyblogApiResourceSubscribe extends ApiResource
 		$result['count'] = $val;		
 		$cmodel = new EasyBlogModelCategory();
 		$result['data'] = $cmodel->getCategorySubscribers($catid);
-		return $result;
+		 return $result;
 	}	
 	//common function for adding subscribers by forking other functions by their type. 
 	public function addSubscription()

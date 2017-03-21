@@ -11,11 +11,6 @@ jimport('joomla.user.user');
 jimport( 'simpleschema.easyblog.category' );
 jimport( 'simpleschema.easyblog.person' );
 jimport( 'simpleschema.easyblog.blog.post' );
-/*
-require_once( EBLOG_HELPERS . '/date.php' );
-require_once( EBLOG_HELPERS . '/string.php' );
-require_once( EBLOG_CLASSES . '/adsense.php' );
-*/
 
 class EasyblogApiResourceCategory extends ApiResource
 {
@@ -35,19 +30,40 @@ class EasyblogApiResourceCategory extends ApiResource
 		$limit = $input->get('limit', 10, 'INT');
 
 		$posts = array();
-		
-		
+				
 		if (!isset($id)) {
 			$categoriesmodel = EasyBlogHelper::getModel( 'Categories' );
 			$categories = $categoriesmodel->getCategoryTree('ordering');
 			
-			$categories = array_slice($categories,$limitstart,$limit);			
+			$categories = array_slice($categories,$limitstart,$limit);	
+					
+			$temp = array();
 			
+			foreach($categories as $avt) {
+				
+				if($avt->avatar)
+				{
+					$avt->avatar = JURI::root().'images/easyblog_cavatar/'.$avt->avatar;
+				} 
+				else
+				{
+					$avt->avatar = null;
+				}
+				$model = EB::model('Category');		// Get total posts in this category		
+				$avt->cat_count = $model->getTotalPostCount($avt->id);
+				
+			}	
 			$this->plugin->setResponse( $categories );
 			return;
 		}
 
 		$category->load($id);
+		$selectedCat = new stdClass();
+		
+		$temp			=	explode(":",$category->getAlias());
+		$selectedCat->title	=	$temp[1];
+		$selectedCat->id	=	$id;
+		
 
 		// private category shouldn't allow to access.
 		$privacy	= $category->checkPrivacy();
@@ -77,11 +93,6 @@ class EasyblogApiResourceCategory extends ApiResource
 		// Get total posts in this category
 		$category->cnt = $model->getTotalPostCount($category->id);
 
-		// Get teamblog posts count
-		// $teamBlogCount = $model->getTeamBlogCount($category->id);
-
-		//$limit = EB::call('Pagination', 'getLimit', array(EBLOG_PAGINATION_CATEGORIES));
-
 		// Get the posts in the category
 		$data = $model->getPosts($catIds);
 		$rows = EB::formatter('list', $data);
@@ -89,8 +100,7 @@ class EasyblogApiResourceCategory extends ApiResource
 		$rows = array_slice($rows,$limitstart,$limit);
 		//end
 		
-		foreach ($rows as $k => $v) {
-			//$item = EasyBlogHelper::getHelper( 'SimpleSchema' )->mapPost($v, '', 100, array('text'));
+		foreach ($rows as $k => $v) {			
 			$scm_obj = new EasyBlogSimpleSchema_plg();
 			$item = $scm_obj->mapPost($v,'', 100, array('text'));
 			
@@ -114,11 +124,10 @@ class EasyblogApiResourceCategory extends ApiResource
 			{					
 				$item->rate->ratings=-2;
 			}			
-
+			$item->selectedCat	=	$selectedCat;
 			$posts[] = $item;
 		}
 
 		$this->plugin->setResponse( $posts );
-	}
-	
+	}	
 }

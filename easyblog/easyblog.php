@@ -16,7 +16,7 @@ class plgAPIEasyblog extends ApiPlugin
 	{
 		parent::__construct($subject, $config = array());
 		
-				/*load language file for plugin frontend*/ 
+		/*load language file for plugin frontend*/ 
 		$lang = JFactory::getLanguage(); 
 		$lang->load('plg_api_easyblog', JPATH_ADMINISTRATOR,'',true);
 
@@ -45,8 +45,7 @@ class plgAPIEasyblog extends ApiPlugin
 		{	
 			ApiResource::addIncludePath(dirname(__FILE__).'/easyblog5');
 			require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/includes/easyblog.php';
-			require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/includes/constants.php' ;
-			//require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/includes/gettable/gettable.php' ;
+			require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/includes/constants.php' ;			
 			require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/date/date.php' );
 			require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/string/string.php' );
 			require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/adsense/adsense.php' );
@@ -55,6 +54,7 @@ class plgAPIEasyblog extends ApiPlugin
 		// Set resources & access
 		$this->setResourceAccess('latest', 'public', 'get');
 		$this->setResourceAccess('category', 'public', 'get');
+		$this->setResourceAccess('tags', 'public', 'get');
 		$this->setResourceAccess('blog', 'public', 'get');
 		$this->setResourceAccess('blog', 'public', 'post');
 		$this->setResourceAccess('comments', 'public', 'get');
@@ -64,6 +64,5 @@ class plgAPIEasyblog extends ApiPlugin
 		if ($config->get('main_allowguestcomment')) {
 			$this->setResourceAccess('comments', 'public', 'post');
 		}
-
 	}
 }

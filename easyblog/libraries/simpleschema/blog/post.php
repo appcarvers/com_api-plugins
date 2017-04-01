@@ -40,6 +40,8 @@ class PostSimpleSchema {
 	
 	public $category;
 	
+	public $featured;
+	
 	public function __construct() {
 		$this->author 		= new PersonSimpleSchema;
 		$this->category 	= new CategorySimpleSchema;

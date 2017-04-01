@@ -21,14 +21,10 @@ jimport( 'simpleschema.easyblog.blog.post' );
 jimport( 'simpleschema.easyblog.category' );
 jimport( 'simpleschema.easyblog.person' );
 
-/*require_once( EBLOG_HELPERS . '/date.php' );
-require_once( EBLOG_HELPERS . '/string.php' );
-require_once( EBLOG_CLASSES . '/adsense.php' );
-//require_once JPATH_SITE.'/components/com_easyblog/tables/blog.php';
-*/
 require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/subscription.php';
 require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/blog.php';
 require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/category.php';
+require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/blogger.php';
 require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/subscriptions.php';
 require_once JPATH_ADMINISTRATOR.'/components/com_easyblog/models/categories.php';
 
@@ -99,7 +95,7 @@ class EasyblogApiResourceSubscribe extends ApiResource
 		$catid = $app->input->get('catid',0,'INT');	
 		$db		= EasyBlogHelper::db();
 		$where	= array();		
-	//Making query for getting count of category subscription.	
+		//Making query for getting count of category subscription.	
 		$query	= 'select count(1) from `#__easyblog_category_subscription` as a';		
         $query  .= ' where  a.category_id = '.$db->Quote($catid);
 		
@@ -124,7 +120,10 @@ class EasyblogApiResourceSubscribe extends ApiResource
 						 return $res2;			
 			break;
 			case 'cat': $res3=$this->addToCategorysubscribe();
-						 return $res3;	
+						 return $res3;
+			break;
+			case 'author': $res4=$this->addToAuthorsubscribe();
+						 return $res4;			
 			break;
 		}
 	}
@@ -189,5 +188,24 @@ class EasyblogApiResourceSubscribe extends ApiResource
 		else
 			return false; 		
 		return $result;
-	}			
+	}		
+	
+	public function addToAuthorsubscribe()
+	{
+		$app 	= JFactory::getApplication();
+		$email  = $app->input->get('email','','STRING');
+		$userid = $app->input->get('userid','','STRING');
+		$name   = $app->input->get('name','','STRING');
+		$bloggerid  = $app->input->get('bloggerid',0,'INT');
+		$bmodel = new EasyBlogModelBlogger();
+		$status = $bmodel->isBloggerSubscribedUser($bloggerid,$userid,$email);
+		if(!$status)
+		{
+			$result = $bmodel->addBloggerSubscription($bloggerid,$email,$userid,$name);			
+		}
+		else
+			return false; 	
+				
+		return $result;
+	}	
 }

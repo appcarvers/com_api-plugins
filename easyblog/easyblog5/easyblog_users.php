@@ -38,17 +38,27 @@ class EasyblogApiResourceEasyblog_users extends ApiResource
 		$app = JFactory::getApplication();
 		$limitstart = $app->input->get('limitstart',0,'INT');
 		$limit =  $app->input->get('limit',0,'INT');		
-		$search =  $app->input->get('search','','STRING');		
+		$search =  $app->input->get('search','','STRING');	
+		$userid =  $app->input->get('userid','','INT');	
+		$user = JFactory::getUser($this->plugin->get('user')->id);
 		$ob1  = new EasyBlogModelBlogger();
-		$ob1->setState('limitstart',$limitstart);
-		//$bloggers = $ob1->getAllBloggers('latest',$limit, $filter='showallblogger' , $search );		
+		$ob1->setState('limitstart',$limitstart);				
+		
 		$bloggers = $ob1->getBloggers('latest',$limit, $filter='showbloggerwithpost' , $search );		
-		$blogger = EasyBlogHelper::table( 'Profile' );		
+		$blogger = EasyBlogHelper::table( 'Profile' );
+				
 		foreach( $bloggers as $usr )
 		{
-			$blogger->load($usr->id);
-			//$avatar = $blogger->getAvatar();
-			$usr->avatar = $blogger->getAvatar();
+			$blogger->load($usr->id);			
+			$usr->avatar = $blogger->getAvatar();			
+			$usr->status = $ob1->isBloggerSubscribedUser($usr->id, $userid);
+			$usr->email = $user->email;
+			
+			if($usr->status) {
+				$usr->isFollowed = true;
+			} else {
+				$usr->isFollowed = false;
+			}
 		}
 		
 		return $bloggers;

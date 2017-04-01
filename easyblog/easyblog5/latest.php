@@ -10,11 +10,7 @@ jimport('joomla.user.user');
 jimport( 'simpleschema.easyblog.category' );
 jimport( 'simpleschema.easyblog.person' );
 jimport( 'simpleschema.easyblog.blog.post' );
-/*
-require_once( EBLOG_HELPERS . '/date.php' );
-require_once( EBLOG_HELPERS . '/string.php' );
-require_once( EBLOG_CLASSES . '/adsense.php' );
-*/
+
 require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/date/date.php' );
 require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/string/string.php' );
 require_once( JPATH_ADMINISTRATOR.'/components/com_easyblog/includes'. '/adsense/adsense.php' );
@@ -34,7 +30,6 @@ class EasyblogApiResourceLatest extends ApiResource
 		$input = JFactory::getApplication()->input;
 		$model = EasyBlogHelper::getModel( 'Blog' );
 	
-		//$id = $input->get('id', null, 'INT');
 		$id = 0;
 		$search = $input->get('search', '', 'STRING');
 		$featured = $input->get('featured',0,'INT');
@@ -54,28 +49,42 @@ class EasyblogApiResourceLatest extends ApiResource
 		}//for get featured blog
 		else if($featured)
 		{
-			$rows = $this->getfeature_Blog();
-			$sorting	= $this->plugin->params->get( 'sorting' , 'featured' );
+			if($search)
+			{
+				$rows = $model->getBlogsBy('', '', 'latest', 1000, EBLOG_FILTER_PUBLISHED, $search, true, array(), false, false, true, '', '', null, '', false);
+			} 
+			else
+			{
+				$rows = $this->getfeature_Blog();
+				$sorting	= $this->plugin->params->get( 'sorting' , 'featured' );
+			}
 		}//for get users blog
 		else if($user_id)
 		{	$blogs = EasyBlogHelper::getModel( 'Blog' );
 			$rows = $blogs->getBlogsBy('blogger', $user_id, 'latest');
 		}
 		else
-		{	//to get latest blog
-			//$sorting	= $this->plugin->params->get( 'sorting' , 'latest' );
-			//$rows 	= $model->getBlogsBy( $sorting , '' , $sorting , 0, EBLOG_FILTER_PUBLISHED, $search );
-			$rows = $model->getBlogsBy('', '', 'latest', 0, EBLOG_FILTER_PUBLISHED, $search, true, array(), false, false, true, '', '', null, 'listlength', false);
-			//$rows = EB::formatter('list', $rows, false);
+		{	
+			//to get latest blog
+			$rows = $model->getBlogsBy('', '', 'latest', 1000, EBLOG_FILTER_PUBLISHED, $search, true, array(), false, false, true, '', '', null, '', false);
+			
+			$temp = array();
+			foreach($rows as $row)
+			{				
+				if($model->isFeatured($row->id)!= 1 )
+				{
+					$temp[] = $row;
+					} 					
+				}
+			$rows=$temp;
 		}
 		$rows = EB::formatter('list', $rows, false);
 		//data mapping
 		foreach ($rows as $k => $v) 
-		{
-			//$item = EB::helper( 'simpleschema' )->mapPost($v,'', 100, array('text'));							
+		{						
 			$scm_obj = new EasyBlogSimpleSchema_plg();
 			$item = $scm_obj->mapPost($v,'', 100, array('text'));
-		
+
 			$item->tags = $modelPT->getBlogTags($item->postid);
 			$item->isowner = ( $v->created_by == $this->plugin->get('user')->id )?true:false;
 			
@@ -96,6 +105,15 @@ class EasyblogApiResourceLatest extends ApiResource
 		 	if($item->rate->ratings==0)
 			{					
 				$item->rate->ratings=-2;
+			}
+			
+			if($featured) 
+			{
+				$item->featured = true;
+			}
+			else 
+			{
+				$item->featured = false;
 			}
 				
 			$posts[] = $item;

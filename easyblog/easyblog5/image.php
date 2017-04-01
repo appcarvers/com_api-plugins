@@ -10,22 +10,9 @@ defined('_JEXEC') or die( 'Restricted access' );
 error_reporting(E_ERROR | E_PARSE);
 
 jimport('joomla.user.user');
-/*
-require_once( EBLOG_CONTROLLERS . '/media.php' );
-require_once( EBLOG_HELPERS . '/date.php' );
-require_once( EBLOG_HELPERS . '/string.php' );
-require_once( EBLOG_CLASSES . '/adsense.php' );
-
-//for image upload
-require_once( EBLOG_CLASSES . '/mediamanager.php' );
-require_once( EBLOG_HELPERS . '/image.php' );
-require_once( EBLOG_CLASSES . '/easysimpleimage.php' );
-require_once( EBLOG_CLASSES . '/mediamanager/local.php' );
-require_once( EBLOG_CLASSES . '/mediamanager/types/image.php' );*/
 
 //for image upload
 require_once( EBLOG_ADMIN_INCLUDES . '/mediamanager/mediamanager.php' );
-//require_once( EBLOG_HELPERS . '/image.php' );
 require_once( EBLOG_ADMIN_INCLUDES . '/image/image.php' );
 require_once( EBLOG_ADMIN_INCLUDES . '/blogimage/blogimage.php' );
 require_once( EBLOG_ADMIN_INCLUDES . '/mediamanager/adapters/local.php' );
@@ -43,10 +30,6 @@ class EasyblogApiResourceImage extends ApiResource
 
 	public function post()
 	{
-			//old  code
-			/*$controller = new EasyBlogControllerMedia;
-			$op = $controller->upload();
-			*/
 			
 			$input = JFactory::getApplication()->input;
 			$log_user = $this->plugin->get('user')->id;
@@ -57,24 +40,12 @@ class EasyblogApiResourceImage extends ApiResource
 
 			if($file['name'])
 			{
-				$post = 	EB::post(NULL);
-				$post->create();
 				$key = $post->id;
-				$key = $key + 1;
 				$place 	= 'post:'.$key;
 				$key =	null;
 			
 			// The user might be from a subfolder?
 			$source	= urldecode('/'.$file['name']);
-
-			// @task: Let's find the exact path first as there could be 3 possibilities here.
-			// 1. Shared folder
-			// 2. User folder
-			//$absolutePath 		= EasyBlogMediaManager::getAbsolutePath( $source , $place );
-			//$absoluteURI		= EasyBlogMediaManager::getAbsoluteURI( $source , $place );
-
-			//$absolutePath 		= EasyBlogMediaManager::getPath( $source );
-			//$absoluteURI		= EasyBlogMediaManager::getUrl( $source );
 
 			$allowed		= EasyBlogImage::canUploadFile( $file , $message );
 
@@ -85,8 +56,7 @@ class EasyblogApiResourceImage extends ApiResource
 				return $res;
 			}
 
-			$media 			= new EasyBlogMediaManager();
-			//$upload_result		= $media->upload( $absolutePath , $absoluteURI , $file , $source , $place );
+			$media 			= new EasyBlogMediaManager();			
 			$upload_result		= $media->upload( $file ,$place );
 
 			//adjustment
